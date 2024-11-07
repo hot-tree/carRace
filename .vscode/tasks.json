@@ -1,0 +1,71 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "compileMain",
+                "link"
+            ],
+            "dependsOrder": "sequence"
+        },
+        {
+            "label": "compileMain",
+            "type": "shell",
+            "command": "g++.exe",
+            "args": [
+                "-g",
+                "-c",
+                "src/main.cpp",
+                "-I", "${workspaceFolder}/include",
+                "-I/C:/Program Files (x86)/mingw32/include",
+                "-I/dxlib",
+                "-I",
+                ".",
+                "-DDX_GCC_COMPILE",
+                "-DDX_NON_INLINE_ASM",
+                "-o", "${workspaceFolder}/build/objects/main.o"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "link",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "${workspaceFolder}/build/objects/main.o",
+                "-mwindows",
+                "-L/Program Files (x86)/mingw32/lib",
+                "-L/dxlib",
+                "-lDxLib",
+                "-lDxUseCLib",
+                "-lDxDrawFunc",
+                "-ljpeg",
+                "-lpng",
+                "-lzlib",
+                "-ltiff",
+                "-ltheora_static",
+                "-lvorbis_static",
+                "-lvorbisfile_static",
+                "-logg_static",
+                "-lbulletdynamics",
+                "-lbulletcollision",
+                "-lbulletmath",
+                "-lopusfile",
+                "-lopus",
+                "-lsilk_common",
+                "-lcelt",
+                "-o", "${workspaceFolder}/build/bin/main.exe"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}
