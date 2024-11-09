@@ -1,17 +1,36 @@
 #include "DxLib.h"
 #include <stdlib.h>
 
+typedef enum {
+    CAR_TYPE_RED,
+    CAR_TYPE_YELLOW,
+    CAR_TYPE_BLUE,
+    CAR_TYPE_TRUCK,
+    CAR_TYPE_NUM // 車のタイプの数
+} CAR_TYPE;
+
+typedef struct {
+    const char *filePath;
+    CAR_TYPE carType;
+} MEDIA_FILE;
+
+MEDIA_FILE const carImgs[] = {
+    {"resources/image/car_red.png", CAR_TYPE_RED},
+    {"resources/image/car_yellow.png", CAR_TYPE_YELLOW},
+    {"resources/image/car_blue.png", CAR_TYPE_BLUE},
+    {"resources/image/truck.png", CAR_TYPE_TRUCK}
+};
+
+int carGraphHandles[CAR_TYPE_NUM]; // 車画像のハンドル
+
 // 車の画像を管理する定数と配列
-enum { RED, YELLOW, BLUE, TRUCK };
-const int CAR_MAX = 4;
-int imgCar[CAR_MAX];
-const int CAR_W[CAR_MAX] = { 32, 26, 26,  40 };
-const int CAR_H[CAR_MAX] = { 48, 48, 48, 100 };
+const int CAR_W[CAR_TYPE_NUM] = { 32, 26, 26,  40 };
+const int CAR_H[CAR_TYPE_NUM] = { 48, 48, 48, 100 };
 
 // 車を表示する関数
 void drawCar(int x, int y, int type)
 {
-    DrawGraph(x - CAR_W[type] / 2, y - CAR_H[type] / 2, imgCar[type], TRUE);
+    DrawGraph(x - CAR_W[type] / 2, y - CAR_H[type] / 2, carGraphHandles[type], TRUE);
 }
 
 // 影を付けた文字列を表示する関数
@@ -38,15 +57,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int imgBG = LoadGraph("resources/image/bg.png"); // 背景の画像
 
     // 車の画像を配列に読み込む
-    imgCar[RED] = LoadGraph("resources/image/car_red.png");
-    imgCar[YELLOW] = LoadGraph("resources/image/car_yellow.png");
-    imgCar[BLUE] = LoadGraph("resources/image/car_blue.png");
-    imgCar[TRUCK] = LoadGraph("resources/image/truck.png");
+    for (int i = 0; i < CAR_TYPE_NUM; i++)
+    {
+        carGraphHandles[i] = LoadGraph(carImgs[i].filePath);
+    }
 
     // プレイヤーの車用の変数
     int playerX = WIDTH / 2;
     int playerY = HEIGHT / 2;
-    int playerType = RED;
+    int playerType = CAR_TYPE_RED;
 
     // コンピューターが動かす車用の配列
     const int COM_MAX = 8;
@@ -55,7 +74,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
         computerX[i] = rand() % 180 + 270;
         computerY[i] = -100;
-        computerType[i] = YELLOW + rand() % 3;
+        computerType[i] = CAR_TYPE_YELLOW + rand() % 3;
         computerFlag[i] = 0;
     }
 
@@ -113,7 +132,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 {
                     computerX[i] = rand() % 180 + 270;
                     computerY[i] = -100;
-                    computerType[i] = YELLOW + rand() % 3;
+                    computerType[i] = CAR_TYPE_YELLOW + rand() % 3;
                     computerFlag[i] = 0;
                 }
                 // ヒットチェック
