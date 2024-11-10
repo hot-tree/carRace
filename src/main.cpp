@@ -12,7 +12,7 @@ typedef enum {
 typedef struct {
     const char *filePath;
     int carType;
-} MEDIA_FILE;
+} CAR_IMAGE;
 
 typedef struct {
     int carType;
@@ -32,7 +32,13 @@ typedef struct {
     int flag; // プレイヤーカーに追い越されたかどうか
 } COMPUTER_CAR;
 
-MEDIA_FILE const carImgs[] = {
+typedef struct {
+    int x;
+    int y;
+    int graphHandle;
+} FUEL_ITEM;
+
+CAR_IMAGE const carImgs[] = {
     {"resources/image/car_red.png", CAR_TYPE_RED},
     {"resources/image/car_yellow.png", CAR_TYPE_YELLOW},
     {"resources/image/car_blue.png", CAR_TYPE_BLUE},
@@ -87,6 +93,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     playerCar.x = WIDTH / 2;
     playerCar.y = HEIGHT / 2;
     GetGraphSize(carGraphHandles[playerCar.carType], &playerCar.width, &playerCar.height);
+    playerCar.fuel = 0;
 
     // コンピューターが動かす車用の配列
     const int COM_MAX = 8;
@@ -105,10 +112,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int highScore = 5000;
 
     // 燃料アイテム用の変数
-    int fuel = 0;
-    int fuelX = WIDTH / 2;
-    int fuelY = 0;
-    int imgFuel = LoadGraph("resources/image/fuel.png");
+    FUEL_ITEM fuelItem;
+    fuelItem.x = WIDTH / 2;
+    fuelItem.y = 0;
+    fuelItem.graphHandle = LoadGraph("resources/image/fuel.png");
 
     // ゲーム進行に関する変数
     enum { TITLE, PLAY, OVER };
@@ -169,7 +176,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     DrawBox(playerCar.x - playerCar.width / 2, playerCar.y - playerCar.height / 2, playerCar.x + playerCar.width / 2, playerCar.y + playerCar.height / 2, col, TRUE);
                     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0); // 通常の描画に戻す
                     PlaySoundMem(seCrash, DX_PLAYTYPE_BACK); // 効果音
-                    fuel -= 10;
+                    playerCar.fuel -= 10;
                 }
                 // 追い抜いたかを判定
                 if (computerCars[i].y > playerCar.y && computerCars[i].flag == 0)
@@ -190,16 +197,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // 燃料アイテムの処理
         if (scene == PLAY) // ゲーム中だけ出現
         {
-            fuelY += 4;
-            if (fuelY > HEIGHT) fuelY = -100;
-            if (abs(fuelX - playerCar.x) < playerCar.width / 2 + 12 && abs(fuelY - playerCar.y) < playerCar.height / 2 + 12)
+            fuelItem.y += 4;
+            if (fuelItem.y > HEIGHT) fuelItem.y = -100;
+            if (abs(fuelItem.x - playerCar.x) < playerCar.width / 2 + 12 && abs(fuelItem.y - playerCar.y) < playerCar.height / 2 + 12)
             {
-                fuelX = rand() % 180 + 270;
-                fuelY = -500;
-                fuel += 200;
+                fuelItem.x = rand() % 180 + 270;
+                fuelItem.y = -500;
+                playerCar.fuel += 200;
                 PlaySoundMem(seFuel, DX_PLAYTYPE_BACK); // 効果音
             }
-            DrawGraph(fuelX - 12, fuelY - 12, imgFuel, TRUE);
+            DrawGraph(fuelItem.x - 12, fuelItem.y - 12, fuelItem.graphHandle, TRUE);
         }
 
         timer++; // タイマーをカウント
@@ -217,20 +224,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     computerCars[i].y = HEIGHT + 100;
                     computerCars[i].flag = 0;
                 }
-                fuelX = WIDTH / 2;
-                fuelY = -100;
+                fuelItem.x = WIDTH / 2;
+                fuelItem.y = -100;
                 score = 0;
-                fuel = 1000;
+                playerCar.fuel = 1000;
                 scene = PLAY;
                 PlaySoundMem(bgm, DX_PLAYTYPE_LOOP); // ＢＧＭをループ再生
             }
             break;
 
         case PLAY: // ゲームをプレイする処理
-            fuel -= 1;
-            if (fuel < 0)
+            playerCar.fuel -= 1;
+            if (playerCar.fuel < 0)
             {
-                fuel = 0;
+                playerCar.fuel = 0;
                 scene = OVER;
                 timer = 0;
                 StopSoundMem(bgm); // ＢＧＭを停止
@@ -248,9 +255,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         drawText(10, 10, 0x00ffff, "SCORE %d", score, 30);
         drawText(WIDTH - 200, 10, 0xffff00, "HI-SC %d", highScore, 30);
         int col = 0x00ff00; // 燃料の値を表示する色
-        if (fuel < 400) col = 0xffc000;
-        if (fuel < 200) col = 0xff0000;
-        drawText(10, HEIGHT - 40, col, "FUEL %d", fuel, 30);
+        if (playerCar.fuel < 400) col = 0xffc000;
+        if (playerCar.fuel < 200) col = 0xff0000;
+        drawText(10, HEIGHT - 40, col, "FUEL %d", playerCar.fuel, 30);
 
         ScreenFlip(); // 裏画面の内容を表画面に反映させる
         WaitTimer(16); // 一定時間待つ
