@@ -9,6 +9,14 @@ typedef enum {
     CAR_TYPE_NUM // 車のタイプの数
 } CAR_TYPE;
 
+typedef enum {
+    E_AUDIO_MAIN,
+    E_AUDIO_OVER,
+    E_AUDIO_GET_FUEL,
+    E_AUDIO_CRASH,
+    E_AUDIO_NUM // オーディオファイルの数
+} E_AUDIO;
+
 typedef struct {
     const char *filePath;
     int carType;
@@ -38,6 +46,11 @@ typedef struct {
     int graphHandle;
 } FUEL_ITEM;
 
+typedef struct {
+    const char *filePath;
+    int e_audio;
+} AUDIO_FILE;
+
 CAR_IMAGE const carImgs[] = {
     {"resources/image/car_red.png", CAR_TYPE_RED},
     {"resources/image/car_yellow.png", CAR_TYPE_YELLOW},
@@ -45,7 +58,15 @@ CAR_IMAGE const carImgs[] = {
     {"resources/image/truck.png", CAR_TYPE_TRUCK}
 };
 
+AUDIO_FILE const audioFiles[] = {
+    {"resources/sound/bgm.mp3", E_AUDIO_MAIN},
+    {"resources/sound/gameover.mp3", E_AUDIO_OVER},
+    {"resources/sound/fuel.mp3", E_AUDIO_GET_FUEL},
+    {"resources/sound/crash.mp3", E_AUDIO_CRASH}
+};
+
 int carGraphHandles[CAR_TYPE_NUM]; // 車画像のハンドル
+int soundHandles[E_AUDIO_NUM]; // オーディオファイルのハンドル
 
 // 車を表示する関数
 void drawPlayerCar(PLAYER_CAR playerCar)
@@ -123,12 +144,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int timer = 0;
 
     // サウンドの読み込みと音量設定
-    int bgm = LoadSoundMem("resources/sound/bgm.mp3");
-    int jin = LoadSoundMem("resources/sound/gameover.mp3");
-    int seFuel = LoadSoundMem("resources/sound/fuel.mp3");
-    int seCrash = LoadSoundMem("resources/sound/crash.mp3");
-    ChangeVolumeSoundMem(128, bgm);
-    ChangeVolumeSoundMem(128, jin);
+    for (int i = 0; i < E_AUDIO_NUM; i++)
+    {
+        soundHandles[i] = LoadSoundMem(audioFiles[i].filePath);
+    }
+    // int bgm = LoadSoundMem("resources/sound/bgm.mp3");
+    // int jin = LoadSoundMem("resources/sound/gameover.mp3");
+    // int seFuel = LoadSoundMem("resources/sound/fuel.mp3");
+    // int seCrash = LoadSoundMem("resources/sound/crash.mp3");
+    ChangeVolumeSoundMem(128, soundHandles[E_AUDIO_MAIN]);
+    ChangeVolumeSoundMem(128, soundHandles[E_AUDIO_OVER]);
 
     while (1) // メインループ
     {
@@ -175,7 +200,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     SetDrawBlendMode(DX_BLENDMODE_ADD, 255); // 色を加算する設定
                     DrawBox(playerCar.x - playerCar.width / 2, playerCar.y - playerCar.height / 2, playerCar.x + playerCar.width / 2, playerCar.y + playerCar.height / 2, col, TRUE);
                     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0); // 通常の描画に戻す
-                    PlaySoundMem(seCrash, DX_PLAYTYPE_BACK); // 効果音
+                    PlaySoundMem(soundHandles[E_AUDIO_CRASH], DX_PLAYTYPE_BACK); // 効果音
                     playerCar.fuel -= 10;
                 }
                 // 追い抜いたかを判定
@@ -204,7 +229,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 fuelItem.x = rand() % 180 + 270;
                 fuelItem.y = -500;
                 playerCar.fuel += 200;
-                PlaySoundMem(seFuel, DX_PLAYTYPE_BACK); // 効果音
+                PlaySoundMem(soundHandles[E_AUDIO_GET_FUEL], DX_PLAYTYPE_BACK); // 効果音
             }
             DrawGraph(fuelItem.x - 12, fuelItem.y - 12, fuelItem.graphHandle, TRUE);
         }
@@ -229,7 +254,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 score = 0;
                 playerCar.fuel = 1000;
                 scene = PLAY;
-                PlaySoundMem(bgm, DX_PLAYTYPE_LOOP); // ＢＧＭをループ再生
+                PlaySoundMem(soundHandles[E_AUDIO_MAIN], DX_PLAYTYPE_LOOP); // ＢＧＭをループ再生
             }
             break;
 
@@ -240,8 +265,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 playerCar.fuel = 0;
                 scene = OVER;
                 timer = 0;
-                StopSoundMem(bgm); // ＢＧＭを停止
-                PlaySoundMem(jin, DX_PLAYTYPE_BACK); // ジングルを出力
+                StopSoundMem(soundHandles[E_AUDIO_MAIN]); // ＢＧＭを停止
+                PlaySoundMem(soundHandles[E_AUDIO_OVER], DX_PLAYTYPE_BACK); // ジングルを出力
             }
             break;
 
