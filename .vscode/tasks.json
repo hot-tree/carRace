@@ -9,6 +9,7 @@
             },
             "dependsOn": [
                 "compileMain",
+                "compileFunction",
                 "link"
             ],
             "dependsOrder": "sequence"
@@ -35,11 +36,33 @@
             ]
         },
         {
+            "label": "compileFunction",
+            "type": "shell",
+            "command": "g++.exe",
+            "args": [
+                "-g",
+                "-c",
+                "src/function.cpp",
+                "-I", "${workspaceFolder}/include",
+                "-I/C:/Program Files (x86)/mingw32/include",
+                "-I/dxlib",
+                "-I",
+                ".",
+                "-DDX_GCC_COMPILE",
+                "-DDX_NON_INLINE_ASM",
+                "-o", "${workspaceFolder}/build/objects/function.o"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
             "label": "link",
             "type": "shell",
             "command": "g++",
             "args": [
                 "${workspaceFolder}/build/objects/main.o",
+                "${workspaceFolder}/build/objects/function.o",
                 "-mwindows",
                 "-L/Program Files (x86)/mingw32/lib",
                 "-L/dxlib",

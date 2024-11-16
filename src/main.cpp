@@ -1,56 +1,12 @@
 #include "DxLib.h"
 #include <stdlib.h>
 
-typedef enum {
-    CAR_TYPE_RED,
-    CAR_TYPE_YELLOW,
-    CAR_TYPE_BLUE,
-    CAR_TYPE_TRUCK,
-    CAR_TYPE_NUM // 車のタイプの数
-} CAR_TYPE;
+#include "main.h"
+#include "function.h"
 
-typedef enum {
-    E_AUDIO_MAIN,
-    E_AUDIO_OVER,
-    E_AUDIO_GET_FUEL,
-    E_AUDIO_CRASH,
-    E_AUDIO_NUM // オーディオファイルの数
-} E_AUDIO;
-
-typedef struct {
-    const char *filePath;
-    int carType;
-} CAR_IMAGE;
-
-typedef struct {
-    int carType;
-    int x;
-    int y;
-    int width;
-    int height;
-    int fuel;
-} PLAYER_CAR;
-
-typedef struct {
-    int carType;
-    int x;
-    int y;
-    int width;
-    int height;
-    int flag; // プレイヤーカーに追い越されたかどうか
-} COMPUTER_CAR;
-
-typedef struct {
-    int x;
-    int y;
-    int graphHandle;
-} FUEL_ITEM;
-
-typedef struct {
-    const char *filePath;
-    int e_audio;
-} AUDIO_FILE;
-
+/**********************************************************
+ * グローバル変数定義
+***********************************************************/
 CAR_IMAGE const carImgs[] = {
     {"resources/image/car_red.png", CAR_TYPE_RED},
     {"resources/image/car_yellow.png", CAR_TYPE_YELLOW},
@@ -65,27 +21,11 @@ AUDIO_FILE const audioFiles[] = {
     {"resources/sound/crash.mp3", E_AUDIO_CRASH}
 };
 
+const char *backgroudImage = "resources/image/bg.png";
+const char *fuelImage = "resources/image/fuel.png";
+
 int carGraphHandles[CAR_TYPE_NUM]; // 車画像のハンドル
 int soundHandles[E_AUDIO_NUM]; // オーディオファイルのハンドル
-
-// 車を表示する関数
-void drawPlayerCar(PLAYER_CAR playerCar)
-{
-    DrawGraph(playerCar.x - playerCar.width / 2, playerCar.y - playerCar.height / 2, carGraphHandles[playerCar.carType], TRUE);
-}
-
-void drawComputerCar(COMPUTER_CAR computerCar)
-{
-    DrawGraph(computerCar.x - computerCar.width / 2, computerCar.y - computerCar.height / 2, carGraphHandles[computerCar.carType], TRUE);
-}
-
-// 影を付けた文字列を表示する関数
-void drawText(int x, int y, int col, const char* txt, int val, int siz)
-{
-    SetFontSize(siz);
-    DrawFormatString(x + 2, y + 2, 0x000000, txt, val);
-    DrawFormatString(x, y, col, txt, val);
-}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -100,7 +40,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     SetDrawScreen(DX_SCREEN_BACK); // 描画面を裏画面にする
 
     int bgY = 0; // 道路をスクロールさせるための変数
-    int imgBG = LoadGraph("resources/image/bg.png"); // 背景の画像
+    int imgBG = LoadGraph(backgroudImage); // 背景の画像
 
     // 車の画像を配列に読み込む
     for (int i = 0; i < CAR_TYPE_NUM; i++)
@@ -136,7 +76,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     FUEL_ITEM fuelItem;
     fuelItem.x = WIDTH / 2;
     fuelItem.y = 0;
-    fuelItem.graphHandle = LoadGraph("resources/image/fuel.png");
+    fuelItem.graphHandle = LoadGraph(fuelImage);
 
     // ゲーム進行に関する変数
     enum { TITLE, PLAY, OVER };
@@ -148,10 +88,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
         soundHandles[i] = LoadSoundMem(audioFiles[i].filePath);
     }
-    // int bgm = LoadSoundMem("resources/sound/bgm.mp3");
-    // int jin = LoadSoundMem("resources/sound/gameover.mp3");
-    // int seFuel = LoadSoundMem("resources/sound/fuel.mp3");
-    // int seCrash = LoadSoundMem("resources/sound/crash.mp3");
     ChangeVolumeSoundMem(128, soundHandles[E_AUDIO_MAIN]);
     ChangeVolumeSoundMem(128, soundHandles[E_AUDIO_OVER]);
 
@@ -173,7 +109,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if (playerCar.y < 40) playerCar.y = 40;
             if (playerCar.y > 600) playerCar.y = 600;
         }
-        drawPlayerCar(playerCar);
+        drawPlayerCar(playerCar, carGraphHandles[playerCar.carType]);
 
         // コンピューターの車を動かす処理
         for (int i = 0; i < COM_MAX; i++)
@@ -216,7 +152,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 computerCars[i].y = computerCars[i].y - 1 - i;
                 if (computerCars[i].y < -100) computerCars[i].y = HEIGHT + 100;
             }
-            drawComputerCar(computerCars[i]);
+            drawComputerCar(computerCars[i], carGraphHandles[computerCars[i].carType]);
         }
 
         // 燃料アイテムの処理
