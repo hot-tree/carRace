@@ -5,6 +5,11 @@
 #include "function.h"
 
 /**********************************************************
+ * define
+***********************************************************/
+#define WIDTH 720
+#define HEIGHT 640
+/**********************************************************
  * グローバル変数定義
 ***********************************************************/
 CAR_IMAGE const carImgs[] = {
@@ -29,9 +34,6 @@ int soundHandles[E_AUDIO_NUM]; // オーディオファイルのハンドル
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    // 定数
-    const int WIDTH = 720, HEIGHT = 640; // ウィンドウの幅と高さのピクセル数
-
     SetWindowText("carRace"); // ウィンドウのタイトル
     SetGraphMode(WIDTH, HEIGHT, 32); // ウィンドウの大きさとカラービット数の指定
     ChangeWindowMode(TRUE); // ウィンドウモードで起動
@@ -79,8 +81,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     fuelItem.graphHandle = LoadGraph(fuelImage);
 
     // ゲーム進行に関する変数
-    enum { TITLE, PLAY, OVER };
-    int scene = TITLE;
+    int scene = E_GAME_SCENE_TITLE;
     int timer = 0;
 
     // サウンドの読み込みと音量設定
@@ -96,12 +97,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         ClearDrawScreen(); // 画面をクリアする
 
         // 背景のスクロール処理
-        if (scene == PLAY) bgY = (bgY + 10) % HEIGHT; // プレイ中にだけスクロール
+        if (scene == E_GAME_SCENE_PLAY) bgY = (bgY + 10) % HEIGHT; // プレイ中にだけスクロール
         DrawGraph(0, bgY - HEIGHT, imgBG, FALSE);
         DrawGraph(0, bgY, imgBG, FALSE);
 
         // プレイヤーの車を動かす処理
-        if (scene == PLAY) // プレイ中にだけ動かす
+        if (scene == E_GAME_SCENE_PLAY) // プレイ中にだけ動かす
         {
             GetMousePoint(&playerCar.x, &playerCar.y);
             if (playerCar.x < 260) playerCar.x = 260;
@@ -114,7 +115,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // コンピューターの車を動かす処理
         for (int i = 0; i < COM_MAX; i++)
         {
-            if (scene == PLAY) // プレイ中の車の処理
+            if (scene == E_GAME_SCENE_PLAY) // プレイ中の車の処理
             {
                 computerCars[i].y = computerCars[i].y + 1 + i;
                 //画面の下から外に出たかを判定
@@ -156,7 +157,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         // 燃料アイテムの処理
-        if (scene == PLAY) // ゲーム中だけ出現
+        if (scene == E_GAME_SCENE_PLAY) // ゲーム中だけ出現
         {
             fuelItem.y += 4;
             if (fuelItem.y > HEIGHT) fuelItem.y = -100;
@@ -173,7 +174,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         timer++; // タイマーをカウント
         switch (scene) // タイトル、ゲームプレイ、ゲームオーバーの分岐
         {
-        case TITLE: // タイトル画面の処理
+        case E_GAME_SCENE_TITLE: // タイトル画面の処理
             drawText(160, 160, 0xffffff, "Car Race", 0, 100);
             if (timer % 60 < 30) drawText(210, 400, 0x00ff00, "Click to start.", 0, 40);
             if (GetMouseInput() & MOUSE_INPUT_LEFT)
@@ -189,26 +190,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 fuelItem.y = -100;
                 score = 0;
                 playerCar.fuel = 1000;
-                scene = PLAY;
+                scene = E_GAME_SCENE_PLAY;
                 PlaySoundMem(soundHandles[E_AUDIO_MAIN], DX_PLAYTYPE_LOOP); // ＢＧＭをループ再生
             }
             break;
 
-        case PLAY: // ゲームをプレイする処理
+        case E_GAME_SCENE_PLAY: // ゲームをプレイする処理
             playerCar.fuel -= 1;
             if (playerCar.fuel < 0)
             {
                 playerCar.fuel = 0;
-                scene = OVER;
+                scene = E_GAME_SCENE_OVER;
                 timer = 0;
                 StopSoundMem(soundHandles[E_AUDIO_MAIN]); // ＢＧＭを停止
                 PlaySoundMem(soundHandles[E_AUDIO_OVER], DX_PLAYTYPE_BACK); // ジングルを出力
             }
             break;
 
-        case OVER: // ゲームオーバーの処理
+        case E_GAME_SCENE_OVER: // ゲームオーバーの処理
             drawText(180, 240, 0xff0000, "GAME OVER", 0, 80);
-            if (timer > 60 * 5) scene = TITLE;
+            if (timer > 60 * 5) scene = E_GAME_SCENE_TITLE;
             break;
         }
 
