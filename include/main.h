@@ -20,6 +20,12 @@ typedef enum {
     E_AUDIO_NUM // オーディオファイルの数
 } E_AUDIO;
 
+typedef enum { 
+    E_GAME_SCENE_TITLE,
+    E_GAME_SCENE_PLAY,
+    E_GAME_SCENE_OVER 
+} E_GAME_SCENE;
+
 typedef struct {
     const char *filePath;
     int carType;
