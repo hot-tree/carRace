@@ -17,6 +17,7 @@ typedef enum {
     E_AUDIO_OVER,
     E_AUDIO_GET_FUEL,
     E_AUDIO_CRASH,
+    E_AUDIO_SHIELD,
     E_AUDIO_NUM // オーディオファイルの数
 } E_AUDIO;
 
@@ -38,6 +39,7 @@ typedef struct {
     int width;
     int height;
     int fuel;
+    int shieldFlag; // シールドを身にまとっているか
 } PLAYER_CAR;
 
 typedef struct {
@@ -54,6 +56,12 @@ typedef struct {
     int y;
     int graphHandle;
 } FUEL_ITEM;
+
+typedef struct {
+    int x;
+    int y;
+    int graphHandle;
+} DEFENSIVE_ITEM;
 
 typedef struct {
     const char *filePath;

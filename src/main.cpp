@@ -23,11 +23,13 @@ AUDIO_FILE const audioFiles[] = {
     {"resources/sound/bgm.mp3", E_AUDIO_MAIN},
     {"resources/sound/gameover.mp3", E_AUDIO_OVER},
     {"resources/sound/fuel.mp3", E_AUDIO_GET_FUEL},
-    {"resources/sound/crash.mp3", E_AUDIO_CRASH}
+    {"resources/sound/crash.mp3", E_AUDIO_CRASH},
+    {"resources/sound/shield_effect.mp3", E_AUDIO_SHIELD}
 };
 
 const char *backgroudImage = "resources/image/bg.png";
 const char *fuelImage = "resources/image/fuel.png";
+const char *defensiveImage = "resources/image/shield_kiteshield_iron.png";
 
 int carGraphHandles[CAR_TYPE_NUM]; // 車画像のハンドル
 int soundHandles[E_AUDIO_NUM]; // オーディオファイルのハンドル
@@ -57,6 +59,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     playerCar.y = HEIGHT / 2;
     GetGraphSize(carGraphHandles[playerCar.carType], &playerCar.width, &playerCar.height);
     playerCar.fuel = 0;
+    playerCar.shieldFlag = 0;
 
     // コンピューターが動かす車用の配列
     const int COM_MAX = 8;
@@ -76,9 +79,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // 燃料アイテム用の変数
     FUEL_ITEM fuelItem;
-    fuelItem.x = WIDTH / 2;
-    fuelItem.y = 0;
+    fuelItem.x = rand() % 180 + 270;
+    fuelItem.y = -100;
     fuelItem.graphHandle = LoadGraph(fuelImage);
+
+    // 防御アイテム用の変数
+    DEFENSIVE_ITEM defensiveItem;
+    defensiveItem.x = rand() % 180 + 270;
+    defensiveItem.y = -100;
+    defensiveItem.graphHandle = LoadGraph(defensiveImage);
 
     // ゲーム進行に関する変数
     int scene = E_GAME_SCENE_TITLE;
@@ -133,12 +142,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 int hei = playerCar.height / 2 + computerCars[i].height / 2 - 4;
                 if (dx < wid && dy < hei) // 接触しているか
                 {
-                    int col = GetColor(rand() % 256, rand() % 256, rand() % 256); // 重ねる色
-                    SetDrawBlendMode(DX_BLENDMODE_ADD, 255); // 色を加算する設定
-                    DrawBox(playerCar.x - playerCar.width / 2, playerCar.y - playerCar.height / 2, playerCar.x + playerCar.width / 2, playerCar.y + playerCar.height / 2, col, TRUE);
-                    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0); // 通常の描画に戻す
-                    PlaySoundMem(soundHandles[E_AUDIO_CRASH], DX_PLAYTYPE_BACK); // 効果音
-                    playerCar.fuel -= 10;
+                    if (playerCar.shieldFlag == 0) { // シールドがない場合
+                        int col = GetColor(rand() % 256, rand() % 256, rand() % 256); // 重ねる色
+                        SetDrawBlendMode(DX_BLENDMODE_ADD, 255); // 色を加算する設定
+                        DrawBox(playerCar.x - playerCar.width / 2, playerCar.y - playerCar.height / 2, playerCar.x + playerCar.width / 2, playerCar.y + playerCar.height / 2, col, TRUE);
+                        SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0); // 通常の描画に戻す
+                        PlaySoundMem(soundHandles[E_AUDIO_CRASH], DX_PLAYTYPE_BACK); // 効果音
+                        playerCar.fuel -= 10;
+                    } else { // シールドがある場合
+                        PlaySoundMem(soundHandles[E_AUDIO_SHIELD], DX_PLAYTYPE_BACK); // 効果音
+                        playerCar.shieldFlag = 0;
+                    }
                 }
                 // 追い抜いたかを判定
                 if (computerCars[i].y > playerCar.y && computerCars[i].flag == 0)
@@ -159,7 +173,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // 燃料アイテムの処理
         if (scene == E_GAME_SCENE_PLAY) // ゲーム中だけ出現
         {
-            fuelItem.y += 4;
+            fuelItem.y += 6;
             if (fuelItem.y > HEIGHT) fuelItem.y = -100;
             if (abs(fuelItem.x - playerCar.x) < playerCar.width / 2 + 12 && abs(fuelItem.y - playerCar.y) < playerCar.height / 2 + 12)
             {
@@ -169,6 +183,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 PlaySoundMem(soundHandles[E_AUDIO_GET_FUEL], DX_PLAYTYPE_BACK); // 効果音
             }
             DrawGraph(fuelItem.x - 12, fuelItem.y - 12, fuelItem.graphHandle, TRUE);
+        }
+
+        // 防御アイテムの処理
+        if (scene == E_GAME_SCENE_PLAY) // ゲーム中だけ出現
+        {
+            defensiveItem.y += 6;
+            if (defensiveItem.y > HEIGHT) defensiveItem.y = -100;
+            if (abs(defensiveItem.x - playerCar.x) < playerCar.width / 2 + 12 && abs(defensiveItem.y - playerCar.y) < playerCar.height / 2 + 12)
+            {
+                defensiveItem.x = rand() % 180 + 270;
+                defensiveItem.y = -500;
+                playerCar.shieldFlag = 1;
+                PlaySoundMem(soundHandles[E_AUDIO_GET_FUEL], DX_PLAYTYPE_BACK); // 効果音
+            }
+            DrawGraph(defensiveItem.x - 12, defensiveItem.y - 12, defensiveItem.graphHandle, TRUE);
         }
 
         timer++; // タイマーをカウント
